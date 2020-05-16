@@ -1,46 +1,41 @@
 package ua.edu.ukma.fido.entity;
 
 import com.github.snksoft.crc.CRC;
-import lombok.Getter;
-import lombok.ToString;
+import com.google.common.primitives.UnsignedLong;
+import lombok.Data;
 
 import java.nio.ByteBuffer;
 
-@ToString
+@Data
 public class Packet {
-    final static Byte bMagic = 0x13;
+    public final static Byte bMagic = 0x13;
 
-    public Packet(Byte bSrc, Long bPktId, Message bMsq) {
+    Byte bSrc;
+    UnsignedLong bPktId;
+    Integer wLen;
+    Message bMsq;
+
+    Short wCrc16_1;
+    Short wCrc16_2;
+
+    public Packet(Byte bSrc, UnsignedLong bPktId, Message bMsq) {
         this.bSrc = bSrc;
         this.bPktId = bPktId;
-        wCrc16_1 = calculateCrc16(bSrc, bPktId);
 
         this.bMsq = bMsq;
         wLen = bMsq.getMessage().length();
-        wCrc16_2 = calculateCrc16(bMsq);
     }
-
-    @Getter
-    Byte bSrc;
-
-    @Getter
-    Long bPktId;
-
-    @Getter
-    Integer wLen;
-
-    @Getter
-    Message bMsq;
 
     public Packet(byte[] encodedPacket) throws Exception {
         ByteBuffer buffer = ByteBuffer.wrap(encodedPacket);
 
         Byte expectedBMagic = buffer.get();
+        System.out.println(bMagic);
         if (!expectedBMagic.equals(bMagic))
             throw new Exception("Unexpected bMagic");
 
         bSrc = buffer.get();
-        bPktId = buffer.getLong();
+        bPktId = UnsignedLong.fromLongBits(buffer.getLong());
         wLen = buffer.getInt();
 
         wCrc16_1 = buffer.getShort();
@@ -56,43 +51,30 @@ public class Packet {
         wCrc16_2 = buffer.getShort();
     }
 
-    public void setbMsq(Message bMsq) {
-        this.bMsq = bMsq;
-        wLen = bMsq.getMessage().length();
-        String packet = bMsq.toString();
-        wCrc16_1 = (short) CRC.calculateCRC(CRC.Parameters.CRC16, packet.getBytes());
-    }
-
-    @Getter
-    Short wCrc16_1;
-
-    @Getter
-    Short wCrc16_2;
-
-    private Short calculateCrc16(Byte bSrc, Long bPktId) {
-        String packet = bMagic.toString() + '|' + bSrc.toString() + '|' + bPktId.toString();
-        return (short) CRC.calculateCRC(CRC.Parameters.CRC16, packet.getBytes());
-    }
-
-    private Short calculateCrc16(Message bMsq) {
-        String packet = bMsq.toString();
-        return (short) CRC.calculateCRC(CRC.Parameters.CRC16, packet.getBytes());
-    }
-
     public byte[] toPacket() {
         Message message = getBMsq();
 
         message.encode();
 
-        Integer packetLength = bMagic.BYTES + bSrc.BYTES + bPktId.BYTES + wLen.BYTES + wCrc16_1.BYTES + message.getMessageBytesLength() + wCrc16_2.BYTES;
-        return ByteBuffer.allocate(packetLength)
-                .put(bMagic)
-                .put(bSrc)
-                .putLong(bPktId)
-                .putInt(wLen)
-                .putShort(wCrc16_1)
-                .put(message.toPacketPart())
-                .putShort(wCrc16_2)
-                .array();
+        Integer packetPartFirstLength = bMagic.BYTES + bSrc.BYTES + Long.BYTES + wLen.BYTES;
+        byte[] packetPartFirst = ByteBuffer.allocate(packetPartFirstLength)
+                                    .put(bMagic)
+                                    .put(bSrc)
+                                    .putLong(bPktId.longValue())
+                                    .putInt(wLen)
+                                    .array();
+
+        wCrc16_1 = (short) CRC.calculateCRC(CRC.Parameters.CRC16, packetPartFirst);
+
+        Integer packetPartSecondLength = message.getMessageBytesLength();
+        byte[] packetPartSecond = ByteBuffer.allocate(packetPartSecondLength)
+                                    .put(message.toPacketPart())
+                                    .array();
+
+        wCrc16_2 = (short) CRC.calculateCRC(CRC.Parameters.CRC16, packetPartSecond);
+
+        Integer packetLength = packetPartFirstLength + wCrc16_1.BYTES + packetPartSecondLength + wCrc16_2.BYTES;
+
+        return ByteBuffer.allocate(packetLength).put(packetPartFirst).putShort(wCrc16_1).put(packetPartSecond).putShort(wCrc16_2).array();
     }
 }
