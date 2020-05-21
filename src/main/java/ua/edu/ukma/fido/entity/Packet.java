@@ -9,14 +9,16 @@ import java.nio.ByteBuffer;
 @Data
 public class Packet {
     public final static Byte bMagic = 0x13;
-
-    Byte bSrc;
     UnsignedLong bPktId;
+    Byte bSrc;
     Integer wLen;
-    Message bMsq;
-
     Short wCrc16_1;
+    Message bMsq;
     Short wCrc16_2;
+
+    public final static Integer packetPartFirstLengthWithoutwLen = bMagic.BYTES + Byte.BYTES + Long.BYTES;
+    public final static Integer packetPartFirstLength = packetPartFirstLengthWithoutwLen + Integer.BYTES;
+    public final static Integer packetPartFirstLengthWithCRC16 = packetPartFirstLength + Short.BYTES;
 
     public Packet(Byte bSrc, UnsignedLong bPktId, Message bMsq) {
         this.bSrc = bSrc;
@@ -56,25 +58,28 @@ public class Packet {
 
         message.encode();
 
-        Integer packetPartFirstLength = bMagic.BYTES + bSrc.BYTES + Long.BYTES + wLen.BYTES;
+
         byte[] packetPartFirst = ByteBuffer.allocate(packetPartFirstLength)
                                     .put(bMagic)
                                     .put(bSrc)
                                     .putLong(bPktId.longValue())
                                     .putInt(wLen)
                                     .array();
-
-        wCrc16_1 = (short) CRC.calculateCRC(CRC.Parameters.CRC16, packetPartFirst);
+        wCrc16_1 = calculateCRC16(packetPartFirst);
 
         Integer packetPartSecondLength = message.getMessageBytesLength();
         byte[] packetPartSecond = ByteBuffer.allocate(packetPartSecondLength)
                                     .put(message.toPacketPart())
                                     .array();
 
-        wCrc16_2 = (short) CRC.calculateCRC(CRC.Parameters.CRC16, packetPartSecond);
+        wCrc16_2 = calculateCRC16(packetPartSecond);
 
         Integer packetLength = packetPartFirstLength + wCrc16_1.BYTES + packetPartSecondLength + wCrc16_2.BYTES;
 
         return ByteBuffer.allocate(packetLength).put(packetPartFirst).putShort(wCrc16_1).put(packetPartSecond).putShort(wCrc16_2).array();
+    }
+
+    public static Short calculateCRC16(byte[] packetPartFirst) {
+        return (short) CRC.calculateCRC(CRC.Parameters.CRC16, packetPartFirst);
     }
 }
