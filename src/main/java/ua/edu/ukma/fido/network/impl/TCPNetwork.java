@@ -5,6 +5,7 @@ import ua.edu.ukma.fido.entity.Message;
 import ua.edu.ukma.fido.entity.Packet;
 import ua.edu.ukma.fido.network.Network;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -28,49 +29,66 @@ public class TCPNetwork implements Network {
         socket = serverSocket.accept();
 
         socketOutputStream = socket.getOutputStream();
-        serverInputStream = socket.getInputStream();;
+        serverInputStream = socket.getInputStream();
     }
 
     @Override
     public Packet receive() {
+        Integer state = 0;
+        Integer wLen = 0;
+        Boolean packetIncomplete = true;
+
         try {
-            byte firstBuffer[] = new byte[Packet.packetPartFirstLengthWithCRC16];
-            while ((serverInputStream.read(firstBuffer)) == -1) System.out.println("waiting");
+            ByteBuffer byteBuffer = ByteBuffer.allocate(Long.BYTES);
+            ByteArrayOutputStream packetBytes = new ByteArrayOutputStream();
 
-            ByteBuffer byteBuffer = ByteBuffer.wrap(firstBuffer);
-            System.out.println(Arrays.toString(firstBuffer));
+            byte oneByte[] = new byte[1];
 
-            Integer wLen = byteBuffer.getInt(Packet.packetPartFirstLengthWithoutwLen);
-            Short wCrc16_1_Packet = byteBuffer.getShort(Packet.packetPartFirstLength);
+            while (packetIncomplete && (serverInputStream.read(oneByte)) != -1) {
+                if (Packet.bMagic.equals(oneByte[0])) {
+                    state = 0;
+                    byteBuffer = ByteBuffer.allocate(Packet.packetPartFirstLengthWithoutwLen - Packet.bMagic.BYTES);
+                    packetBytes.reset();
+                } else {
+                    byteBuffer.put(oneByte);
+                    switch (state) {
+                        case 0:
+                            if (!byteBuffer.hasRemaining()) {
+                                byteBuffer = ByteBuffer.allocate(Integer.BYTES);
+                                state = 1;
+                            }
+                            break;
 
-            byte[] packetFirstPart = new byte[Packet.packetPartFirstLength];
-            byteBuffer.get(packetFirstPart, 0, Packet.packetPartFirstLength);
-            Short wCrc16_1_Calculated = Packet.calculateCRC16(packetFirstPart);
+                        case 1:
+                            if (!byteBuffer.hasRemaining()) {
+                                wLen = byteBuffer.getInt(0);
+                                byteBuffer = ByteBuffer.allocate(Short.BYTES + Message.BYTES_WITHOUT_MESSAGE + wLen + Short.BYTES);
+                                state = 2;
+                            }
+                            break;
 
-            System.out.println("wCrc16_1_Packet: " + wCrc16_1_Packet);
-            System.out.println("wCrc16_1_Calculated: " + wCrc16_1_Calculated + "\n");
+                        case 2:
+                            if (!byteBuffer.hasRemaining()) {
+                                packetIncomplete = false;
+                            }
+                            break;
+                    }
+                }
+                packetBytes.write(oneByte);
+            }
 
-            Integer secondPartLength = Message.BYTES_WITHOUT_MESSAGE + wLen + Short.BYTES;
+            byte fullPacket[] = packetBytes.toByteArray();
 
-            byte secondBuffer[] = new byte[secondPartLength];
-            while ((serverInputStream.read(secondBuffer)) == -1) System.out.println("waiting");
+            System.out.println("Received");
+            System.out.println(Arrays.toString(fullPacket) + "\n");
 
-            byte[] packetBytes = ByteBuffer.allocate(Packet.packetPartFirstLengthWithCRC16 + secondPartLength)
-                    .put(firstBuffer)
-                    .put(secondBuffer)
-                    .array();
-
-            System.out.println(Arrays.toString(packetBytes));
-            System.out.println("Received\n");
-
-            Packet packet = new Packet(packetBytes);
+            Packet packet = new Packet(fullPacket);
             System.err.println(packet.getBMsq().getMessage());
-
 
             Processor.process(this, packet);
         } catch (Exception e) {
             System.err.println("Error:" + socket);
-            System.err.println(e.getStackTrace());
+            e.printStackTrace();
         }
         return null;
     }
@@ -89,8 +107,8 @@ public class TCPNetwork implements Network {
         socketOutputStream.write(packetBytes);
         socketOutputStream.flush();
 
-        System.out.println(Arrays.toString(packetBytes));
-        System.out.println("Send\n");
+        System.out.println("Send");
+        System.out.println(Arrays.toString(packetBytes) + "\n");
     }
 
     @Override

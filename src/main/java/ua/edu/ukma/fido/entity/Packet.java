@@ -32,7 +32,6 @@ public class Packet {
         ByteBuffer buffer = ByteBuffer.wrap(encodedPacket);
 
         Byte expectedBMagic = buffer.get();
-        System.out.println(bMagic);
         if (!expectedBMagic.equals(bMagic))
             throw new Exception("Unexpected bMagic");
 
