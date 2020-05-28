@@ -1,28 +1,54 @@
 package ua.edu.ukma.fido;
 
-import com.google.common.primitives.UnsignedLong;
-import ua.edu.ukma.fido.entity.Message;
-import ua.edu.ukma.fido.entity.Packet;
-
 public class Main {
+    static final int
+            PRODUCT = 1,
+            GROUP = 2;
+
+    static final int
+            CREATE = 4,
+            READ = 8,
+            UPDATE = 16,
+            DELETE = 32;
+
+    static final int
+            PRODUCT_CREATE = PRODUCT ^ CREATE,
+            PRODUCT_READ   = PRODUCT ^ READ,
+            PRODUCT_UPDATE = PRODUCT ^ UPDATE,
+            PRODUCT_DELETE = PRODUCT ^ DELETE;
+
+    static final int
+            GROUP_CREATE = GROUP ^ CREATE,
+            GROUP_READ   = GROUP ^ READ,
+            GROUP_UPDATE = GROUP ^ UPDATE,
+            GROUP_DELETE = GROUP ^ DELETE;
+
     public static void main(String[] args) {
-        UnsignedLong moreThanLongbPktId = UnsignedLong.valueOf(Long.MAX_VALUE);
-        moreThanLongbPktId = moreThanLongbPktId.plus(UnsignedLong.valueOf("2305"));
+        int INCOMING_TYPE = GROUP;
+        int INCOMING_ACTION = CREATE;
 
-        System.out.println("UnsignedLong moreThanLongbPktId: " + moreThanLongbPktId.toString());
-        System.out.println("long moreThanLongbPktId: " + moreThanLongbPktId.longValue());
+        int INCOMING_COMMAND_TYPE = INCOMING_TYPE ^ INCOMING_ACTION;
 
-        Message testMessage = new Message(3, 4, "test");
-        Packet packet = new Packet((byte) 1, moreThanLongbPktId, testMessage);
-        System.out.println("Out packet: ");
-        System.out.println(packet);
-        byte[] encodedPacket = packet.toPacket();
-        try {
-            Packet decodedPacket = new Packet(encodedPacket);
-            System.out.println("Int packet: ");
-            System.out.println(decodedPacket);
-        } catch (Exception e) {
-            e.printStackTrace();
+        boolean IS_PRODUCT = (INCOMING_COMMAND_TYPE & PRODUCT) == 1;
+
+        int COMMAND = INCOMING_COMMAND_TYPE ^ (IS_PRODUCT ? PRODUCT : GROUP);
+
+        switch (COMMAND) {
+            case CREATE:
+                System.out.println("CREATE " + (IS_PRODUCT ? "PRODUCT" : "GROUP"));
+                break;
+
+            case READ:
+                System.out.println("READ " + (IS_PRODUCT ? "PRODUCT" : "GROUP"));
+                break;
+
+            case UPDATE:
+                System.out.println("UPDATE " + (IS_PRODUCT ? "PRODUCT" : "GROUP"));
+                break;
+
+            case DELETE:
+                System.out.println("DELETE " + (IS_PRODUCT ? "PRODUCT" : "GROUP"));
+                break;
         }
     }
 }
