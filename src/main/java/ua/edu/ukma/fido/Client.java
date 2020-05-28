@@ -32,10 +32,14 @@ public class Client {
             network.connect();
 
             network.send(packet);
-            network.receive();
+            Packet answerPacketOne = network.receive();
+            if (answerPacketOne.getBPktId().equals(packet.getBPktId()))
+                System.out.println("CORRECT");
+            else
+                System.out.println("WRONG PACKET RESPONSE");
 
             network.send(secondPacket);
-            network.receive();
+            Packet answerTwo = network.receive();
 
             network.close();
         } catch (IOException e) {

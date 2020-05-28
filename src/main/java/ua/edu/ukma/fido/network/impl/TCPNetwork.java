@@ -16,7 +16,6 @@ import java.util.Arrays;
 
 public class TCPNetwork implements Network {
     Socket socket;
-
     ServerSocket serverSocket;
 
     @Override
@@ -34,37 +33,26 @@ public class TCPNetwork implements Network {
     public Packet receive() throws IOException {
         InputStream serverInputStream = socket.getInputStream();
 
-        Integer state = 0;
-        Integer wLen = 0;
-        Boolean packetReceived = true;
-
-        byte emptyBuffer[] = new byte[Packet.packetMaxSize];
         try {
-            while (packetReceived) {
-                byte maxPacketBuffer[] = emptyBuffer.clone();
+            byte maxPacketBuffer[] = new byte[Packet.packetMaxSize];
 
-                serverInputStream.read(maxPacketBuffer);
+            serverInputStream.read(maxPacketBuffer);
 
-                if (maxPacketBuffer != emptyBuffer) {
-                    packetReceived = false;
+            ByteBuffer byteBuffer = ByteBuffer.wrap(maxPacketBuffer);
+            Integer wLen = byteBuffer.getInt(Packet.packetPartFirstLengthWithoutwLen);
 
-                    ByteBuffer byteBuffer = ByteBuffer.wrap(maxPacketBuffer);
-                    wLen = byteBuffer.getInt(Packet.packetPartFirstLengthWithoutwLen);
+            byte fullPacket[] = byteBuffer.slice(0, Packet.packetPartFirstLength + Message.BYTES_WITHOUT_MESSAGE + wLen).array();
 
-                    byte fullPacket[] = byteBuffer.slice(0, Packet.packetPartFirstLength + Message.BYTES_WITHOUT_MESSAGE + wLen).array();
+            System.out.println("Received");
+            System.out.println(Arrays.toString(fullPacket) + "\n");
 
-                    System.out.println("Received");
-                    System.out.println(Arrays.toString(fullPacket) + "\n");
+            Packet packet = new Packet(fullPacket);
+            System.err.println(packet.getBMsq().getMessage());
 
-                    Packet packet = new Packet(fullPacket);
-                    System.err.println(packet.getBMsq().getMessage());
-
-                    if (serverSocket != null)
-                        Processor.process(this, packet);
-                    else
-                        return packet;
-                }
-            }
+            if (serverSocket != null)
+                Processor.process(this, packet);
+            else
+                return packet;
         } catch (Exception e) {
             System.err.println("Error:" + socket);
             e.printStackTrace();
@@ -100,6 +88,9 @@ public class TCPNetwork implements Network {
 
     @Override
     public void close() throws IOException {
-        socket.close();
+        if (serverSocket != null)
+            serverSocket.close();
+        else
+            socket.close();
     }
 }

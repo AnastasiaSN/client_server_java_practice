@@ -18,7 +18,7 @@ public class Processor {
         } else {
             answerMessage = new Message(1, 1, "other");
         }
-        Packet answerPacket = new Packet((byte) 1, UnsignedLong.ONE, answerMessage);
+        Packet answerPacket = new Packet((byte) 1, UnsignedLong.MAX_VALUE, answerMessage);
 
         answerPacket.setClientInetAddress(packet.getClientInetAddress());
         answerPacket.setClientPort(packet.getClientPort());
