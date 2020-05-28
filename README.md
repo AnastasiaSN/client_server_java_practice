@@ -8,6 +8,8 @@ Repository contains examples for client-server practices
 [mt_condrace_test_example](https://github.com/troshab/client_server_java_practice/tree/mt_condrace_test_example) – Example of class with condition race vulnerability, and example multithreaded test to find out this vulnerability
 
 [02_tcp_network_example](https://github.com/troshab/client_server_java_practice/tree/homework/02_tcp_network_example) – Server and client which communicate using TCP sockets(byte by byte InputStream reading for possibility of packets integrity guarantee) and with usage of Packet class03_udp_network_example
+                                    
+[magic_bitwise](https://github.com/troshab/client_server_java_practice/tree/magic_bitwise) – Example of bitwise operations that could help you with Packet.Message.cType parametr
                                                                                                                                                                                                                                                                                              
 [03_udp_network_example](https://github.com/troshab/client_server_java_practice/tree/homework/03_udp_network_example) - Server and client UDP modification, with Packet per-block reading, and network properties  
 
