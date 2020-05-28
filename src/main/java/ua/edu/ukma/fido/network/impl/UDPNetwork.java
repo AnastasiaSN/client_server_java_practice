@@ -7,17 +7,15 @@ import ua.edu.ukma.fido.network.Network;
 import ua.edu.ukma.fido.utils.NetworkProperties;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.ServerSocket;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-public class TCPNetwork implements Network {
-    Socket socket;
-
-    ServerSocket serverSocket;
+public class UDPNetwork implements Network {
+    private DatagramSocket socket;
 
     @Override
     public void listen() throws IOException {
@@ -25,16 +23,11 @@ public class TCPNetwork implements Network {
         if (portProperty == null)
             portProperty = "2305";
 
-        serverSocket = new ServerSocket(Integer.parseInt(portProperty));
-
-        socket = serverSocket.accept();
+        socket = new DatagramSocket(Integer.parseInt(portProperty));
     }
 
     @Override
-    public Packet receive() throws IOException {
-        InputStream serverInputStream = socket.getInputStream();
-
-        Integer state = 0;
+    public Packet receive() {
         Integer wLen = 0;
         Boolean packetReceived = true;
 
@@ -43,14 +36,14 @@ public class TCPNetwork implements Network {
             while (packetReceived) {
                 byte maxPacketBuffer[] = emptyBuffer.clone();
 
-                serverInputStream.read(maxPacketBuffer);
+                DatagramPacket datagramPacket = new DatagramPacket(maxPacketBuffer, maxPacketBuffer.length);
+                socket.receive(datagramPacket);
 
                 if (maxPacketBuffer != emptyBuffer) {
                     packetReceived = false;
 
                     ByteBuffer byteBuffer = ByteBuffer.wrap(maxPacketBuffer);
                     wLen = byteBuffer.getInt(Packet.packetPartFirstLengthWithoutwLen);
-
                     byte fullPacket[] = byteBuffer.slice(0, Packet.packetPartFirstLength + Message.BYTES_WITHOUT_MESSAGE + wLen).array();
 
                     System.out.println("Received");
@@ -59,10 +52,10 @@ public class TCPNetwork implements Network {
                     Packet packet = new Packet(fullPacket);
                     System.err.println(packet.getBMsq().getMessage());
 
-                    if (serverSocket != null)
-                        Processor.process(this, packet);
-                    else
-                        return packet;
+                    packet.setClientInetAddress(datagramPacket.getAddress());
+                    packet.setClientPort(datagramPacket.getPort());
+
+                    Processor.process(this, packet);
                 }
             }
         } catch (Exception e) {
@@ -74,6 +67,11 @@ public class TCPNetwork implements Network {
 
     @Override
     public void connect() throws IOException {
+        socket = new DatagramSocket();
+    }
+
+    @Override
+    public void send(Packet packet) throws IOException {
         String hostProperty = NetworkProperties.getProperty("host");
         if (hostProperty == null)
             hostProperty = "localhost";
@@ -82,17 +80,13 @@ public class TCPNetwork implements Network {
         if (portProperty == null)
             portProperty = "2305";
 
-        socket = new Socket(hostProperty,Integer.parseInt(portProperty));
-    }
-
-    @Override
-    public void send(Packet packet) throws IOException {
-        OutputStream socketOutputStream = socket.getOutputStream();
+        InetAddress inetAddress = packet.getClientInetAddress() != null ? packet.getClientInetAddress() : InetAddress.getByName(hostProperty);
+        Integer port = packet.getClientPort() != null ? packet.getClientPort() : Integer.parseInt(portProperty);
 
         byte[] packetBytes = packet.toPacket();
 
-        socketOutputStream.write(packetBytes);
-        socketOutputStream.flush();
+        DatagramPacket datagramPacket = new DatagramPacket(packetBytes, packetBytes.length, inetAddress, port);
+        socket.send(datagramPacket);
 
         System.out.println("Send");
         System.out.println(Arrays.toString(packetBytes) + "\n");

@@ -4,6 +4,7 @@ import com.github.snksoft.crc.CRC;
 import com.google.common.primitives.UnsignedLong;
 import lombok.Data;
 
+import java.net.InetAddress;
 import java.nio.ByteBuffer;
 
 @Data
@@ -16,9 +17,13 @@ public class Packet {
     Message bMsq;
     Short wCrc16_2;
 
+    InetAddress clientInetAddress;
+    Integer clientPort;
+
     public final static Integer packetPartFirstLengthWithoutwLen = bMagic.BYTES + Byte.BYTES + Long.BYTES;
     public final static Integer packetPartFirstLength = packetPartFirstLengthWithoutwLen + Integer.BYTES;
     public final static Integer packetPartFirstLengthWithCRC16 = packetPartFirstLength + Short.BYTES;
+    public final static Integer packetMaxSize = packetPartFirstLengthWithCRC16 + Message.BYTES_MAX_SIZE;
 
     public Packet(Byte bSrc, UnsignedLong bPktId, Message bMsq) {
         this.bSrc = bSrc;

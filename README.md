@@ -2,8 +2,8 @@
 
 Repository contains examples for client-server practices
 
-# 02_tcp_network_example
+# 03_udp_network_example
 
-Server and client which communicate using TCP sockets(byte by byte InputStream reading for possibility of packets integrity guarantee) and with usage of Packet class  
+Server and client UDP modification, with Packet per-block reading, and network properties  
 
 [Other branches with description](https://github.com/troshab/client_server_java_practice/blob/master/README.md)

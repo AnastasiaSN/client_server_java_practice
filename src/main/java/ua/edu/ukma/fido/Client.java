@@ -5,6 +5,8 @@ import ua.edu.ukma.fido.entity.Message;
 import ua.edu.ukma.fido.entity.Packet;
 import ua.edu.ukma.fido.network.Network;
 import ua.edu.ukma.fido.network.impl.TCPNetwork;
+import ua.edu.ukma.fido.network.impl.UDPNetwork;
+import ua.edu.ukma.fido.utils.NetworkProperties;
 
 import java.io.IOException;
 
@@ -17,7 +19,16 @@ public class Client {
         Packet secondPacket = new Packet((byte) 1, UnsignedLong.ONE, secondTestMessage);
 
         try {
-            Network network = new TCPNetwork();
+            String networkType = NetworkProperties.getProperty("type");
+
+            Network network;
+            if (networkType.toLowerCase().equals("tcp"))
+                network = new TCPNetwork();
+            else
+                network = new UDPNetwork();
+
+            System.out.println("Client running via " + network + " connection");
+
             network.connect();
 
             network.send(packet);
