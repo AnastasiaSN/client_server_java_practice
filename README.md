@@ -13,3 +13,4 @@ Repository contains examples for client-server practices
                                                                                                                                                                                                                                                                                              
 [03_udp_network_example](https://github.com/troshab/client_server_java_practice/tree/homework/03_udp_network_example) - Server and client UDP modification, with Packet per-block reading, and network properties  
 
+[sqlite_example](https://github.com/troshab/client_server_java_practice/tree/homework/sqlite_example) - Example of working with SQLite
