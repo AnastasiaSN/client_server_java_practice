@@ -13,6 +13,7 @@ public class Main {
 
     public static void main(String[] args) {
         DB.connect();
+
         Table.create();
 
         Table.insert(1, "First");

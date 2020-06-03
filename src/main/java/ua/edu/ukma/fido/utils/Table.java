@@ -6,12 +6,15 @@ import java.sql.*;
 
 public class Table {
     public static void create() {
-        String sqlQuery = "CREATE TABLE IF NOT EXISTS " + Main.tableName + " (id INTEGER NOT NULL PRIMARY KEY, title TEXT)";
+        String sqlQuery = "CREATE TABLE IF NOT EXISTS " + Main.tableName + " (id INTEGER, title TEXT)";
 
         try {
             Statement statement = DB.connection.createStatement();
 
             statement.execute(sqlQuery);
+
+            System.out.println("Table " + Main.tableName + " created");
+            System.out.println();
         } catch (SQLException sqlException) {
             sqlException.printStackTrace();
         }
