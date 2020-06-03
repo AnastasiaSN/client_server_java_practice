@@ -20,7 +20,8 @@ public class Main {
         Table.insert(2, "Second");
         Table.insert(3, "Три");
 
-        Table.update(3, "Third");
+        ResultSet all = Table.selectAll();
+        printResultSet("all", all);
 
         ResultSet oneByTitle = Table.selectOneByTitle("Second");
         printResultSet("oneByTitle", oneByTitle);
@@ -28,13 +29,12 @@ public class Main {
         ResultSet oneLimitOffset = Table.selectOneLimitOffset(1, 2);
         printResultSet("oneLimitOffset", oneLimitOffset);
 
-        ResultSet all = Table.selectAll();
-        printResultSet("all", all);
-
         Table.delete(2);
 
-        ResultSet allAfterDelete = Table.selectAll();
-        printResultSet("allAfterDelete", allAfterDelete);
+        Table.update(3, "Third");
+
+        ResultSet allAfterUpdateAndDelete = Table.selectAll();
+        printResultSet("allAfterUpdateAndDelete", allAfterUpdateAndDelete);
 
         Table.truncate();
 

@@ -128,6 +128,9 @@ public class Table {
             Statement statement = DB.connection.createStatement();
 
             statement.execute(sqlQuery);
+
+            System.out.println("Table " + Main.tableName + " truncated");
+            System.out.println();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }

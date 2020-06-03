@@ -24,6 +24,9 @@ public class DB {
     public static void close() {
         try {
             connection.close();
+
+            System.out.println("Connection closed");
+            System.out.println();
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         }
