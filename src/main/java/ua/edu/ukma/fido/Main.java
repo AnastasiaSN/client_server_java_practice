@@ -1,21 +1,54 @@
 package ua.edu.ukma.fido;
 
-import lombok.SneakyThrows;
-import ua.edu.ukma.fido.utils.CommandTypeEncoder;
+import ua.edu.ukma.fido.utils.DB;
+import ua.edu.ukma.fido.utils.Table;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Main {
 
-    @SneakyThrows
+    public final static String dbName = "database.db";
+    public final static String tableName = "counter";
+
     public static void main(String[] args) {
-        int INCOMING_TYPE = CommandTypeEncoder.PRODUCT;
-        int INCOMING_ACTION = CommandTypeEncoder.CREATE;
+        DB.connect();
+        Table.create();
 
-        int INCOMING_COMMAND_TYPE = INCOMING_TYPE ^ INCOMING_ACTION;
+        Table.insert(1, "First");
+        Table.insert(2, "Second");
+        Table.insert(3, "Sord");
 
-        CommandTypeEncoder commandType = new CommandTypeEncoder(INCOMING_COMMAND_TYPE);
+        Table.update(3, "Third");
 
-        System.out.println("This is " + (commandType.isProduct() ? " product" : "group"));
-        System.out.println("Command code: " + commandType.getCommandTypeCode());
-        System.out.println("Command: " + commandType.getCommandType());
+        ResultSet oneByTitle = Table.selectOneByTitle("Second");
+        printResultSet("oneByTitle", oneByTitle);
+
+        ResultSet oneLimitOffset = Table.selectOneLimitOffset(1, 2);
+        printResultSet("oneLimitOffset", oneLimitOffset);
+
+        ResultSet all = Table.selectAll();
+        printResultSet("all", all);
+
+        Table.delete(2);
+
+        ResultSet allAfterDelete = Table.selectAll();
+        printResultSet("allAfterDelete", allAfterDelete);
+
+        Table.truncate();
+
+        DB.close();
+    }
+
+    public static void printResultSet(String resultSetName, ResultSet resultSet) {
+        System.out.println(resultSetName + ":");
+        try {
+            while (resultSet.next()) {
+                System.out.println(resultSet.getInt("id") +  "\t" + resultSet.getString("title"));
+            }
+        } catch (SQLException sqlException) {
+            sqlException.printStackTrace();
+        }
+        System.out.println();
     }
 }
