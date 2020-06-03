@@ -17,7 +17,7 @@ public class Main {
 
         Table.insert(1, "First");
         Table.insert(2, "Second");
-        Table.insert(3, "Sord");
+        Table.insert(3, "Три");
 
         Table.update(3, "Third");
 

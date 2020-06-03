@@ -2,8 +2,8 @@
 
 Repository contains examples for client-server practices
 
-# mt_condate_test_example
+# sqlite_example
 
-Example of class with condition race vulnerability, and example multithreaded test to find out this vulnerability
+Example of working with SQLite 
 
 [Other branches with description](https://github.com/troshab/client_server_java_practice/blob/master/README.md)
